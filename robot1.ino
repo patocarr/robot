@@ -72,7 +72,33 @@ int usound() {
   digitalWrite(trigPin, LOW);
 
   duration = pulseIn(echoPin, HIGH);
-  distance = (duration/2) / 29.1;
+  distance = duration/58;
+
+  return(distance);
+}
+
+int ir() {
+  int ir [6];
+  int res=0;
+  for (int i=0; i<6; i++){
+    ir[i] = digitalRead(IR1+i);
+    res = res | ir[i]<<i;
+    Serial.print(ir[i]);
+    Serial.print("  ");
+  }
+  Serial.print(res);
+  Serial.print("  ");
+  return res;
+}
+
+void loop() {
+  int distance;
+  int ir_sensors;
+  unsigned long currMillis = millis();
+  ir_sensors=ir();
+  distance=usound();
+  rMotor.update(distance, currMillis);
+  lMotor.update(distance, currMillis);
 
   if (distance <10) {
     digitalWrite(LED, HIGH);
@@ -81,24 +107,7 @@ int usound() {
   }
   Serial.print(distance);
   Serial.println(" cm");
-  return(distance);
-}
 
-void ir() {
-  int ir [6];
-  for (int i=0; i<6; i++){
-    ir[i] = digitalRead(IR1+i);
-    Serial.print(ir[i]);
-    Serial.print("  ");
-  }
-}
-
-void loop() {
-  int distance;
-  unsigned long currMillis = millis();
-  ir();
-  distance=usound();
-  rMotor.Update(distance, currMillis);
   delay(50);
 }
 
