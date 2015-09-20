@@ -14,10 +14,34 @@
 
 #define LED 13
 
-#define aMotor 3
+#define rightMotor 3
+#define leftMotor 4
 
-  int led=LOW;
-  
+class Motor {
+  int speed;
+  int motorPin;
+  unsigned long prevMillis;
+
+  public:
+  Motor(int pin){
+    motorPin = pin;
+    pinMode(motorPin, OUTPUT);
+    speed = 0;
+    prevMillis = 0;
+  }
+
+  void Update(int newspeed, unsigned long currMillis){
+    if (currMillis - prevMillis >= 10){
+            prevMillis = currMillis;
+            speed = newspeed;
+            analogWrite(motorPin, speed);
+    }
+  }
+};
+
+Motor lMotor(leftMotor);
+Motor rMotor(rightMotor);
+
 // the setup function runs once when you press reset or power the board
 void setup() {
   Serial.begin(9600);
@@ -34,8 +58,6 @@ void setup() {
   pinMode(IR4, INPUT);
   pinMode(IR5, INPUT);
   pinMode(IR6, INPUT);
-
-  pinMode(aMotor, OUTPUT);
 }
 
 int usound() {
@@ -70,15 +92,12 @@ void ir() {
   }
 }
 
-void motor(int speed) {
-  analogWrite(aMotor, speed);
-}
-
 void loop() {
   int distance;
+  unsigned long currMillis = millis();
   ir();
   distance=usound();
-  motor(distance);
+  rMotor.Update(distance, currMillis);
   delay(50);
 }
 
