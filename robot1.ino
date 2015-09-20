@@ -20,18 +20,19 @@
 class Motor {
   int speed;
   int motorPin;
+  int interval;
   unsigned long prevMillis;
 
   public:
-  Motor(int pin){
+  Motor(int pin, int interval){
     motorPin = pin;
     pinMode(motorPin, OUTPUT);
     speed = 0;
     prevMillis = 0;
   }
 
-  void Update(int newspeed, unsigned long currMillis){
-    if (currMillis - prevMillis >= 10){
+  void update(int newspeed, unsigned long currMillis){
+    if (currMillis - prevMillis >= interval){
             prevMillis = currMillis;
             speed = newspeed;
             analogWrite(motorPin, speed);
@@ -39,8 +40,8 @@ class Motor {
   }
 };
 
-Motor lMotor(leftMotor);
-Motor rMotor(rightMotor);
+Motor lMotor(leftMotor, 10);
+Motor rMotor(rightMotor, 10);
 
 // the setup function runs once when you press reset or power the board
 void setup() {
