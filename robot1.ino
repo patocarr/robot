@@ -111,3 +111,5 @@ void loop() {
   delay(50);
 }
 
+/* vim: set tabstop=2 shiftwidth=2 expandtab: */
+
