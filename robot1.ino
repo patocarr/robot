@@ -82,7 +82,7 @@ int ir() {
   int res=0;
   for (int i=0; i<6; i++){
     ir[i] = digitalRead(IR1+i);
-    res = res | ir[i]<<i;
+    res |= ir[i]<<i;
     Serial.print(ir[i]);
     Serial.print("  ");
   }
