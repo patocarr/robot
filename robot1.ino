@@ -79,32 +79,43 @@ int usound() {
 
 int ir() {
   int ir [6];
+  int cosx [6]={-100, -60, -20, 20, 60, 100};
   int res=0;
+  int ir_en_cnt=0;
   for (int i=0; i<6; i++){
     ir[i] = digitalRead(IR1+i);
-    res |= ir[i]<<i;
+    //res |= ir[i]<<i;
+    res += cosx[i]*(ir[i] ? 0 : 1);
+    if (!ir[i]) ir_en_cnt++;
     Serial.print(ir[i]);
     Serial.print("  ");
   }
+  if (ir_en_cnt>0) res = res/ir_en_cnt;
   Serial.print(res);
   Serial.print("  ");
   return res;
 }
 
 void loop() {
-  int distance;
+  int distance, lspeed, rspeed;
   int ir_sensors;
   unsigned long currMillis = millis();
   ir_sensors=ir();
   distance=usound();
-  rMotor.update(distance, currMillis);
-  lMotor.update(distance, currMillis);
+  lspeed = ir_sensors<0 ? distance*(100+ir_sensors)/100: distance;
+  rspeed = ir_sensors>0 ? distance*(100-ir_sensors)/100: distance;
+  Serial.print(lspeed);
+  Serial.print(":");
+  Serial.print(rspeed);
+  lMotor.update(lspeed, currMillis);
+  rMotor.update(rspeed, currMillis);
 
   if (distance <10) {
     digitalWrite(LED, HIGH);
   } else {
     digitalWrite(LED, LOW);
   }
+  Serial.print(" ");
   Serial.print(distance);
   Serial.println(" cm");
 
