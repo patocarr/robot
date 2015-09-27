@@ -19,6 +19,8 @@
 
 #define Motor1 1
 #define Motor2 2
+#define Motor3 3
+#define Motor4 4
 
 class Motor {
   int speed;
@@ -57,6 +59,8 @@ class Motor {
 
 Motor brMotor(Motor2, 10);
 Motor blMotor(Motor1, 10);
+Motor frMotor(Motor3, 10);
+Motor flMotor(Motor4, 10);
 
 // the setup function runs once when you press reset or power the board
 void setup() {
@@ -71,6 +75,8 @@ void setup() {
   // Initialize motor shield
   brMotor.begin();
   blMotor.begin();
+  frMotor.begin();
+  flMotor.begin();
 
   pinMode(IR1, INPUT);
   pinMode(IR2, INPUT);
@@ -127,7 +133,9 @@ void loop() {
   Serial.print(":");
   Serial.print(rspeed);
   brMotor.update(lspeed, currMillis);
+  frMotor.update(lspeed, currMillis);
   blMotor.update(rspeed, currMillis);
+  flMotor.update(rspeed, currMillis);
 
   if (distance <10) {
     digitalWrite(LED, HIGH);
