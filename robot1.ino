@@ -40,12 +40,12 @@ class Motor {
     prevMillis = 0;
   }
 
-  void update(int newspeed, unsigned long currMillis){
+  void update(int newspeed, int dir, unsigned long currMillis){
     if (currMillis - prevMillis >= interval){
       prevMillis = currMillis;
       speed = newspeed;
       myMotor->setSpeed(speed);
-      if (abs(newspeed) == newspeed){
+      if (dir == 1){
         myMotor->run(FORWARD);
       } else {
         myMotor->run(BACKWARD);
@@ -170,10 +170,10 @@ void loop() {
   Serial.print(":");
   Serial.print(rspeed);
 
-  brMotor.update(direction*rspeed, currMillis);
-  frMotor.update(direction*rspeed, currMillis);
-  blMotor.update(direction*lspeed, currMillis);
-  flMotor.update(direction*lspeed, currMillis);
+  brMotor.update(rspeed, direction, currMillis);
+  frMotor.update(rspeed, direction, currMillis);
+  blMotor.update(lspeed, direction, currMillis);
+  flMotor.update(lspeed, direction, currMillis);
 
   if (distance <15) {
     digitalWrite(LED, HIGH);
