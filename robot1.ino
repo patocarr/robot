@@ -47,8 +47,10 @@ class Motor {
       myMotor->setSpeed(speed);
       if (dir == 1){
         myMotor->run(FORWARD);
-      } else {
+      } else if (dir == -1) {
         myMotor->run(BACKWARD);
+      } else {
+        myMotor->run(RELEASE);
       }
     }
   }
@@ -104,7 +106,7 @@ Motor flMotor(Motor4, 10);
 
 enum state_enum {IDLE, MOVING, PAUSE, STOP} state = IDLE;
 unsigned long pauseMillis;
-int direction=1;
+int direction=1, prevdirection;
 
 // the setup function runs once when you press reset or power the board
 void setup() {
@@ -148,14 +150,16 @@ void loop() {
     case MOVING:
       if (distance < 10) {
         pauseMillis = currMillis;
+        prevdirection = direction;
         state = PAUSE;
       }
       break;
     case PAUSE:
       rspeed = lspeed = 0;
+      direction = 0;
       if (currMillis - pauseMillis > 1000){
         state = MOVING;
-        direction = -direction;
+        direction = -prevdirection;
       }
       break;
     case STOP:
