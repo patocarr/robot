@@ -1,6 +1,9 @@
 /*
   Rover Robot
  */
+#include <Wire.h>
+#include <Adafruit_MotorShield.h>
+#include "utility/Adafruit_PWMServoDriver.h"
 
 #define trigPin 31
 #define echoPin 30
@@ -14,8 +17,8 @@
 
 #define LED 13
 
-#define rightMotor 3
-#define leftMotor 4
+#define Motor1 1
+#define Motor2 2
 
 class Motor {
   int speed;
@@ -23,25 +26,37 @@ class Motor {
   int interval;
   unsigned long prevMillis;
 
+  // Create the motor shield object with the default I2C address
+  Adafruit_MotorShield AFMS = Adafruit_MotorShield(); 
+  Adafruit_DCMotor *myMotor;
+
   public:
-  Motor(int pin, int interval){
-    motorPin = pin;
-    pinMode(motorPin, OUTPUT);
+  Motor(uint8_t m, int interval){
+    // Select which motor
+    myMotor = AFMS.getMotor(m);
     speed = 0;
     prevMillis = 0;
   }
 
   void update(int newspeed, unsigned long currMillis){
     if (currMillis - prevMillis >= interval){
-            prevMillis = currMillis;
-            speed = newspeed;
-            analogWrite(motorPin, speed);
+      prevMillis = currMillis;
+      speed = newspeed;
+      myMotor->setSpeed(speed);
+      myMotor->run(FORWARD);
     }
   }
+
+  void begin(void){
+    AFMS.begin();
+  }
+
 };
 
-Motor lMotor(leftMotor, 10);
-Motor rMotor(rightMotor, 10);
+//Adafruit_MotorShield AFMS = Adafruit_MotorShield(); 
+
+Motor brMotor(Motor2, 10);
+Motor blMotor(Motor1, 10);
 
 // the setup function runs once when you press reset or power the board
 void setup() {
@@ -52,6 +67,10 @@ void setup() {
 
   pinMode(trigPin, OUTPUT);
   pinMode(echoPin, INPUT);
+
+  // Initialize motor shield
+  brMotor.begin();
+  blMotor.begin();
 
   pinMode(IR1, INPUT);
   pinMode(IR2, INPUT);
@@ -107,8 +126,8 @@ void loop() {
   Serial.print(lspeed);
   Serial.print(":");
   Serial.print(rspeed);
-  lMotor.update(lspeed, currMillis);
-  rMotor.update(rspeed, currMillis);
+  brMotor.update(lspeed, currMillis);
+  blMotor.update(rspeed, currMillis);
 
   if (distance <10) {
     digitalWrite(LED, HIGH);
