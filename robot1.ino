@@ -45,7 +45,11 @@ class Motor {
       prevMillis = currMillis;
       speed = newspeed;
       myMotor->setSpeed(speed);
-      myMotor->run(FORWARD);
+      if (abs(newspeed) == newspeed){
+        myMotor->run(FORWARD);
+      } else {
+        myMotor->run(BACKWARD);
+      }
     }
   }
 
@@ -54,37 +58,6 @@ class Motor {
   }
 
 };
-
-//Adafruit_MotorShield AFMS = Adafruit_MotorShield(); 
-
-Motor brMotor(Motor2, 10);
-Motor blMotor(Motor1, 10);
-Motor frMotor(Motor3, 10);
-Motor flMotor(Motor4, 10);
-
-// the setup function runs once when you press reset or power the board
-void setup() {
-  Serial.begin(9600);
-  
-  // initialize digital pin 13 as an output.
-  pinMode(LED, OUTPUT);
-
-  pinMode(trigPin, OUTPUT);
-  pinMode(echoPin, INPUT);
-
-  // Initialize motor shield
-  brMotor.begin();
-  blMotor.begin();
-  frMotor.begin();
-  flMotor.begin();
-
-  pinMode(IR1, INPUT);
-  pinMode(IR2, INPUT);
-  pinMode(IR3, INPUT);
-  pinMode(IR4, INPUT);
-  pinMode(IR5, INPUT);
-  pinMode(IR6, INPUT);
-}
 
 int usound() {
 
@@ -121,23 +94,88 @@ int ir() {
   return res;
 }
 
+//------------------------------------------------------------------------------
+// Public variables
+
+Motor brMotor(Motor2, 10);
+Motor blMotor(Motor1, 10);
+Motor frMotor(Motor3, 10);
+Motor flMotor(Motor4, 10);
+
+enum state_enum {IDLE, MOVING, PAUSE, STOP} state = IDLE;
+unsigned long pauseMillis;
+int direction=1;
+
+// the setup function runs once when you press reset or power the board
+void setup() {
+  Serial.begin(9600);
+  
+  // initialize digital pin 13 as an output.
+  pinMode(LED, OUTPUT);
+
+  pinMode(trigPin, OUTPUT);
+  pinMode(echoPin, INPUT);
+
+  // Initialize motor shield
+  brMotor.begin();
+  blMotor.begin();
+  frMotor.begin();
+  flMotor.begin();
+
+  pinMode(IR1, INPUT);
+  pinMode(IR2, INPUT);
+  pinMode(IR3, INPUT);
+  pinMode(IR4, INPUT);
+  pinMode(IR5, INPUT);
+  pinMode(IR6, INPUT);
+}
+
 void loop() {
   int distance, lspeed, rspeed;
   int ir_sensors;
   unsigned long currMillis = millis();
+
   ir_sensors=ir();
   distance=usound();
   lspeed = ir_sensors<0 ? distance*(100+ir_sensors)/100: distance;
   rspeed = ir_sensors>0 ? distance*(100-ir_sensors)/100: distance;
-  Serial.print(lspeed);
+
+  switch (state) {
+    case IDLE:
+      rspeed = lspeed = 0;
+      state = MOVING;
+      break;
+    case MOVING:
+      if (distance < 10) {
+        pauseMillis = currMillis;
+        state = PAUSE;
+      }
+      break;
+    case PAUSE:
+      rspeed = lspeed = 0;
+      if (currMillis - pauseMillis > 1000){
+        state = MOVING;
+        direction = -direction;
+      }
+      break;
+    case STOP:
+      rspeed = lspeed = 0;
+      break;
+  }
+
+  Serial.print(" State=");
+  Serial.print((int)state);
+  Serial.print(" Speed L:R=");
+  Serial.print(direction*lspeed);
   Serial.print(":");
   Serial.print(rspeed);
-  brMotor.update(lspeed, currMillis);
-  frMotor.update(lspeed, currMillis);
-  blMotor.update(rspeed, currMillis);
-  flMotor.update(rspeed, currMillis);
 
-  if (distance <10) {
+  brMotor.update(direction*rspeed, currMillis);
+  frMotor.update(direction*rspeed, currMillis);
+  blMotor.update(direction*lspeed, currMillis);
+  flMotor.update(direction*lspeed, currMillis);
+
+  if (distance <15) {
     digitalWrite(LED, HIGH);
   } else {
     digitalWrite(LED, LOW);
