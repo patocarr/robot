@@ -4,6 +4,7 @@
 #include <Wire.h>
 #include <Adafruit_MotorShield.h>
 #include "utility/Adafruit_PWMServoDriver.h"
+#include <PID_v1.h>
 
 #define trigPin 31
 #define echoPin 30
@@ -21,6 +22,8 @@
 #define Motor2 2
 #define Motor3 3
 #define Motor4 4
+
+#define NUM_USAMPLES 10
 
 class Motor {
   int speed;
@@ -41,13 +44,19 @@ class Motor {
   }
 
   void update(int newspeed, int dir, unsigned long currMillis){
+    int newdir;
     if (currMillis - prevMillis >= interval){
       prevMillis = currMillis;
-      speed = newspeed;
+      if (newspeed>=0){
+        newdir = 1;
+      } else {
+        newdir = -1;
+      }
+      speed = abs(newspeed);
       myMotor->setSpeed(speed);
-      if (dir == 1){
+      if (newdir == 1){
         myMotor->run(FORWARD);
-      } else if (dir == -1) {
+      } else if (newdir == -1) {
         myMotor->run(BACKWARD);
       } else {
         myMotor->run(RELEASE);
@@ -107,6 +116,14 @@ Motor flMotor(Motor4, 10);
 enum state_enum {IDLE, MOVING, PAUSE, STOP} state = IDLE;
 unsigned long pauseMillis;
 int direction=1, prevdirection;
+unsigned long usMillis;
+
+// PID variables
+double Setpoint, Input, Output;
+double Kp=3, Ki=5, Kd=2;
+PID dirPID(&Input, &Output, &Setpoint, Kp, Ki, Kd, REVERSE);
+
+int dist_arr[NUM_USAMPLES];
 
 // the setup function runs once when you press reset or power the board
 void setup() {
@@ -130,47 +147,77 @@ void setup() {
   pinMode(IR4, INPUT);
   pinMode(IR5, INPUT);
   pinMode(IR6, INPUT);
+
+  Setpoint = 50;
+  dirPID.SetMode(AUTOMATIC);
+  dirPID.SetOutputLimits(-80,80);
+  dirPID.SetSampleTime(200);
 }
 
 void loop() {
   int distance, lspeed, rspeed;
   int ir_sensors;
+  int dist_avg, dist_acc;
   unsigned long currMillis = millis();
 
   ir_sensors=ir();
-  distance=usound();
-  lspeed = ir_sensors<0 ? distance*(100+ir_sensors)/100: distance;
-  rspeed = ir_sensors>0 ? distance*(100-ir_sensors)/100: distance;
 
-  switch (state) {
-    case IDLE:
-      rspeed = lspeed = 0;
-      state = MOVING;
-      break;
-    case MOVING:
-      if (distance < 10) {
-        pauseMillis = currMillis;
-        prevdirection = direction;
-        state = PAUSE;
-      }
-      break;
-    case PAUSE:
-      rspeed = lspeed = 0;
-      direction = 0;
-      if (currMillis - pauseMillis > 1000){
-        state = MOVING;
-        direction = -prevdirection;
-      }
-      break;
-    case STOP:
-      rspeed = lspeed = 0;
-      break;
+  if (currMillis - usMillis > 10){
+    distance=usound();
+    usMillis = currMillis;
+
+    for (int i=0; i<NUM_USAMPLES-1; i++){
+      dist_arr[i+1] = dist_arr[i];
+    }
+    dist_arr[0] = distance;
+    dist_avg = 0;
+    for (int i=0; i<NUM_USAMPLES; i++){
+      dist_avg += dist_arr[i];
+    }
+    dist_avg /= NUM_USAMPLES;
   }
+
+  //lspeed = ir_sensors<0 ? distance*(100+ir_sensors)/100: distance;
+  //rspeed = ir_sensors>0 ? distance*(100-ir_sensors)/100: distance;
+
+  Input=dist_avg;
+  dirPID.Compute();
+
+  lspeed = Output;
+  rspeed = Output;
+
+  Serial.print(" Output=");
+  Serial.print(Output);
+
+//  switch (state) {
+//    case IDLE:
+//      rspeed = lspeed = 0;
+//      state = MOVING;
+//      break;
+//    case MOVING:
+//      if (distance < 10) {
+//        pauseMillis = currMillis;
+//        prevdirection = direction;
+//        state = PAUSE;
+//      }
+//      break;
+//    case PAUSE:
+//      rspeed = lspeed = 0;
+//      direction = 0;
+//      if (currMillis - pauseMillis > 1000){
+//        state = MOVING;
+//        direction = -prevdirection;
+//      }
+//      break;
+//    case STOP:
+//      rspeed = lspeed = 0;
+//      break;
+//  }
 
   Serial.print(" State=");
   Serial.print((int)state);
   Serial.print(" Speed L:R=");
-  Serial.print(direction*lspeed);
+  Serial.print(lspeed);
   Serial.print(":");
   Serial.print(rspeed);
 
@@ -185,10 +232,10 @@ void loop() {
     digitalWrite(LED, LOW);
   }
   Serial.print(" ");
-  Serial.print(distance);
+  Serial.print(dist_avg);
   Serial.println(" cm");
 
-  delay(50);
+  //delay(50);
 }
 
 /* vim: set tabstop=2 shiftwidth=2 expandtab: */
