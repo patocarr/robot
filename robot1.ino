@@ -43,7 +43,7 @@ class Motor {
     prevMillis = 0;
   }
 
-  void update(int newspeed, int dir, unsigned long currMillis){
+  void update(int newspeed, unsigned long currMillis){
     int newdir;
     if (currMillis - prevMillis >= interval){
       prevMillis = currMillis;
@@ -99,7 +99,12 @@ int ir() {
     Serial.print(ir[i]);
     Serial.print("  ");
   }
-  if (ir_en_cnt>0) res = res/ir_en_cnt;
+  if (ir_en_cnt>0) {
+    res = res/ir_en_cnt;
+  } else {
+    res = 0;
+  }
+  Serial.print(" Res:");
   Serial.print(res);
   Serial.print("  ");
   return res;
@@ -118,12 +123,17 @@ unsigned long pauseMillis;
 int direction=1, prevdirection;
 unsigned long usMillis;
 
-// PID variables
-double Setpoint, Input, Output;
-double Kp=3, Ki=5, Kd=2;
-PID dirPID(&Input, &Output, &Setpoint, Kp, Ki, Kd, REVERSE);
+// Distance PID variables
+double dSetpoint, dInput, dOutput;
+double dKp=3, dKi=5, dKd=2;
+PID distPID(&dInput, &dOutput, &dSetpoint, dKp, dKi, dKd, REVERSE);
 
 int dist_arr[NUM_USAMPLES];
+
+// Follower PID variables
+double fSetpoint, fInput, fOutput;
+double fKp=3, fKi=5, fKd=2;
+PID followPID(&fInput, &fOutput, &fSetpoint, fKp, fKi, fKd, DIRECT);
 
 // the setup function runs once when you press reset or power the board
 void setup() {
@@ -148,10 +158,15 @@ void setup() {
   pinMode(IR5, INPUT);
   pinMode(IR6, INPUT);
 
-  Setpoint = 50;
-  dirPID.SetMode(AUTOMATIC);
-  dirPID.SetOutputLimits(-80,80);
-  dirPID.SetSampleTime(200);
+  dSetpoint = 50;
+  distPID.SetMode(AUTOMATIC);
+  distPID.SetOutputLimits(-80,80);
+  distPID.SetSampleTime(200);
+
+  fSetpoint = 0;
+  followPID.SetMode(AUTOMATIC);
+  followPID.SetOutputLimits(-50,50);
+  followPID.SetSampleTime(200);
 }
 
 void loop() {
@@ -177,17 +192,19 @@ void loop() {
     dist_avg /= NUM_USAMPLES;
   }
 
-  //lspeed = ir_sensors<0 ? distance*(100+ir_sensors)/100: distance;
-  //rspeed = ir_sensors>0 ? distance*(100-ir_sensors)/100: distance;
+  dInput=dist_avg;
+  distPID.Compute();
 
-  Input=dist_avg;
-  dirPID.Compute();
+  fInput=ir_sensors;
+  followPID.Compute();
 
-  lspeed = Output;
-  rspeed = Output;
+  lspeed = dOutput * (fOutput> 40? 0.2: .5) - fOutput;
+  rspeed = dOutput * (fOutput<-40? 0.2: .5) + fOutput;
 
-  Serial.print(" Output=");
-  Serial.print(Output);
+  Serial.print(" dOutput=");
+  Serial.print(dOutput);
+  Serial.print(" fOutput=");
+  Serial.print(fOutput);
 
 //  switch (state) {
 //    case IDLE:
@@ -214,17 +231,17 @@ void loop() {
 //      break;
 //  }
 
-  Serial.print(" State=");
-  Serial.print((int)state);
+//  Serial.print(" State=");
+//  Serial.print((int)state);
   Serial.print(" Speed L:R=");
   Serial.print(lspeed);
   Serial.print(":");
   Serial.print(rspeed);
 
-  brMotor.update(rspeed, direction, currMillis);
-  frMotor.update(rspeed, direction, currMillis);
-  blMotor.update(lspeed, direction, currMillis);
-  flMotor.update(lspeed, direction, currMillis);
+  brMotor.update(rspeed, currMillis);
+  frMotor.update(rspeed, currMillis);
+  blMotor.update(lspeed, currMillis);
+  flMotor.update(lspeed, currMillis);
 
   if (distance <15) {
     digitalWrite(LED, HIGH);
