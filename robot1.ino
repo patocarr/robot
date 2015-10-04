@@ -195,7 +195,7 @@ void setup() {
   LCD_brightness = 100;
   LCD_setBacklight(162, 40, 255); // light purple
 
-  dSetpoint = 50;
+  dSetpoint = 30;
   distPID.SetMode(AUTOMATIC);
   distPID.SetOutputLimits(-80,80);
   distPID.SetSampleTime(200);
@@ -244,40 +244,12 @@ void loop() {
   Serial.print(fOutput);
 
   lcd.setCursor(0,0);
-  lcd.print("dOutput=");
-  lcd.print(dOutput);
+  lcd.print("dOut ");
+  lcd.print((int)dOutput);
   lcd.setCursor(0,1);
-  lcd.print("fOutput=");
-  lcd.print(fOutput);
+  lcd.print("fOut ");
+  lcd.print((int)fOutput);
 
-
-//  switch (state) {
-//    case IDLE:
-//      rspeed = lspeed = 0;
-//      state = MOVING;
-//      break;
-//    case MOVING:
-//      if (distance < 10) {
-//        pauseMillis = currMillis;
-//        prevdirection = direction;
-//        state = PAUSE;
-//      }
-//      break;
-//    case PAUSE:
-//      rspeed = lspeed = 0;
-//      direction = 0;
-//      if (currMillis - pauseMillis > 1000){
-//        state = MOVING;
-//        direction = -prevdirection;
-//      }
-//      break;
-//    case STOP:
-//      rspeed = lspeed = 0;
-//      break;
-//  }
-
-//  Serial.print(" State=");
-//  Serial.print((int)state);
   Serial.print(" Speed L:R=");
   Serial.print(lspeed);
   Serial.print(":");
