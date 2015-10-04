@@ -76,21 +76,54 @@ class Motor {
 
 };
 
-int usound() {
+class uSound {
+  long duration, distance, interval;
+  unsigned long prevMillis;
+  int dist_arr[NUM_USAMPLES];
 
-  long duration, distance;
-  
-  digitalWrite(trigPin, LOW);
-  delayMicroseconds(2);
-  digitalWrite(trigPin, HIGH);
-  delayMicroseconds(6);
-  digitalWrite(trigPin, LOW);
+  int usound() {
+    long duration, distance;
 
-  duration = pulseIn(echoPin, HIGH);
-  distance = duration/58;
+    digitalWrite(trigPin, LOW);
+    delayMicroseconds(2);
+    digitalWrite(trigPin, HIGH);
+    delayMicroseconds(6);
+    digitalWrite(trigPin, LOW);
 
-  return(distance);
-}
+    duration = pulseIn(echoPin, HIGH);
+    distance = duration/58;
+
+    return(distance);
+  }
+
+  public:
+  uSound(int interval=10){
+    duration, distance = 0;
+    for (int i=0; i<NUM_USAMPLES-1; i++){
+      dist_arr[i]=0;
+    }
+  }
+
+  int get_dist(unsigned long currMillis){
+    int dist_avg;
+    if (currMillis - prevMillis >= interval){
+      prevMillis = currMillis;
+      distance=usound();
+
+      for (int i=0; i<NUM_USAMPLES-1; i++){
+        dist_arr[i+1] = dist_arr[i];
+      }
+      dist_arr[0] = distance;
+      dist_avg = 0;
+      for (int i=0; i<NUM_USAMPLES; i++){
+        dist_avg += dist_arr[i];
+      }
+      dist_avg /= NUM_USAMPLES;
+      distance = dist_avg;
+    }
+    return distance;
+  }
+};
 
 int ir() {
   int ir [6];
@@ -134,7 +167,7 @@ double dSetpoint, dInput, dOutput;
 double dKp=3, dKi=5, dKd=2;
 PID distPID(&dInput, &dOutput, &dSetpoint, dKp, dKi, dKd, REVERSE);
 
-int dist_arr[NUM_USAMPLES];
+uSound usound(10);
 
 // Follower PID variables
 double fSetpoint, fInput, fOutput;
@@ -180,6 +213,7 @@ void setup() {
   frMotor.begin();
   flMotor.begin();
 
+  // Set IR sensor pins
   pinMode(IR1, INPUT);
   pinMode(IR2, INPUT);
   pinMode(IR3, INPUT);
@@ -187,7 +221,7 @@ void setup() {
   pinMode(IR5, INPUT);
   pinMode(IR6, INPUT);
 
-  // set up the LCD's number of columns and rows:
+  // Set up the LCD's number of columns and rows:
   lcd.begin(16, 2);
   pinMode(LCD_RED, OUTPUT);
   pinMode(LCD_GREEN, OUTPUT);
@@ -195,11 +229,13 @@ void setup() {
   LCD_brightness = 100;
   LCD_setBacklight(162, 40, 255); // light purple
 
+  // Set up PID for distance
   dSetpoint = 30;
   distPID.SetMode(AUTOMATIC);
   distPID.SetOutputLimits(-80,80);
   distPID.SetSampleTime(200);
 
+  // Set up PID for light following
   fSetpoint = 0;
   followPID.SetMode(AUTOMATIC);
   followPID.SetOutputLimits(-50,50);
@@ -209,32 +245,18 @@ void setup() {
 void loop() {
   int distance, lspeed, rspeed;
   int ir_sensors;
-  int dist_avg, dist_acc;
   unsigned long currMillis = millis();
 
-  ir_sensors=ir();
-
-  if (currMillis - usMillis > 10){
-    distance=usound();
-    usMillis = currMillis;
-
-    for (int i=0; i<NUM_USAMPLES-1; i++){
-      dist_arr[i+1] = dist_arr[i];
-    }
-    dist_arr[0] = distance;
-    dist_avg = 0;
-    for (int i=0; i<NUM_USAMPLES; i++){
-      dist_avg += dist_arr[i];
-    }
-    dist_avg /= NUM_USAMPLES;
-  }
-
-  dInput=dist_avg;
+  // Get average measured distance
+  dInput=usound.get_dist(currMillis);
   distPID.Compute();
 
+  // Get IR sensors
+  ir_sensors=ir();
   fInput=ir_sensors;
   followPID.Compute();
 
+  // Merge IR & distance outputs and transform into wheel speed
   lspeed = dOutput * (fOutput> 40? 0.2: .5) - fOutput;
   rspeed = dOutput * (fOutput<-40? 0.2: .5) + fOutput;
 
@@ -266,10 +288,8 @@ void loop() {
     digitalWrite(LED, LOW);
   }
   Serial.print(" ");
-  Serial.print(dist_avg);
+  Serial.print(dInput);
   Serial.println(" cm");
-
-  //delay(50);
 }
 
 /* vim: set tabstop=2 shiftwidth=2 expandtab: */
