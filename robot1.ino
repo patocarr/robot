@@ -6,7 +6,6 @@
 #include "utility/Adafruit_PWMServoDriver.h"
 #include <PID_v1.h>
 #include <LiquidCrystal.h>
-#include <Wire.h>
 
 #define trigPin 31
 #define echoPin 30
@@ -156,11 +155,6 @@ Motor brMotor(Motor2, 10);
 Motor blMotor(Motor1, 10);
 Motor frMotor(Motor3, 10);
 Motor flMotor(Motor4, 10);
-
-enum state_enum {IDLE, MOVING, PAUSE, STOP} state = IDLE;
-unsigned long pauseMillis;
-int direction=1, prevdirection;
-unsigned long usMillis;
 
 // Distance PID variables
 double dSetpoint, dInput, dOutput;
