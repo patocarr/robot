@@ -1,11 +1,22 @@
 /*
   Rover Robot
  */
+#include <string.h>
+#include <Arduino.h>
 #include <Wire.h>
 #include <Adafruit_MotorShield.h>
 #include "utility/Adafruit_PWMServoDriver.h"
 #include <PID_v1.h>
 #include <LiquidCrystal.h>
+#if not defined (_VARIANT_ARDUINO_DUE_X_) && not defined (_VARIANT_ARDUINO_ZERO_)
+  #include <SoftwareSerial.h>
+#endif
+
+#include <SPI.h>
+#include <Adafruit_BLE.h>
+#include <Adafruit_BluefruitLE_SPI.h>
+#include <Adafruit_BluefruitLE_UART.h>
+#include "BluefruitConfig.h"
 
 #define trigPin 31
 #define echoPin 30
@@ -124,6 +135,27 @@ class uSound {
   }
 };
 
+class Bluetooth {
+  int initialized, connected;
+
+  Adafruit_BluefruitLE_UART ble = Adafruit_BluefruitLE_UART(Serial2, BLUEFRUIT_UART_MODE_PIN);
+
+  public:
+  Bluetooth(void){
+    ble.echo(false);
+    initialized = ble.begin(false);
+  };
+
+  void begin(void){
+    ble.echo(false);
+    initialized = ble.begin(false);
+  }
+  
+  int connect(void){
+    return ble.isConnected();
+  }
+};
+
 int ir() {
   int ir [6];
   int cosx [6]={-100, -60, -20, 20, 60, 100};
@@ -170,6 +202,8 @@ PID followPID(&fInput, &fOutput, &fSetpoint, fKp, fKi, fKd, DIRECT);
 
 // LCD
 LiquidCrystal lcd(8, 9, 10, 11, 12, 13);
+
+Bluetooth blue;
 
 int LCD_brightness = 255;
 
@@ -234,6 +268,9 @@ void setup() {
   followPID.SetMode(AUTOMATIC);
   followPID.SetOutputLimits(-50,50);
   followPID.SetSampleTime(200);
+
+  // Enable Bluetooth module
+//  blue.begin();
 }
 
 void loop() {
@@ -265,6 +302,7 @@ void loop() {
   lcd.setCursor(0,1);
   lcd.print("fOut ");
   lcd.print((int)fOutput);
+  //if (blue.connect()) lcd.print("BLE On");
 
   Serial.print(" Speed L:R=");
   Serial.print(lspeed);
