@@ -48,11 +48,13 @@ class Motor {
   unsigned long prevMillis;
 
   // Create the motor shield object with the default I2C address
-  Adafruit_MotorShield AFMS = Adafruit_MotorShield(); 
+  Adafruit_MotorShield AFMS;
   Adafruit_DCMotor *myMotor;
 
   public:
-  Motor(uint8_t m, int interval){
+  Motor(uint8_t m, int interval)
+    : AFMS()
+  {
     // Select which motor
     myMotor = AFMS.getMotor(m);
     speed = 0;
