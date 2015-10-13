@@ -137,9 +137,9 @@ class uSound {
   }
 };
 
-class Bluetooth {
+class Bluetooth
+{
   int initialized, connected;
-
   Adafruit_BluefruitLE_UART ble;
 
   public:
@@ -147,16 +147,26 @@ class Bluetooth {
     : ble (Serial2, BLUEFRUIT_UART_MODE_PIN)
   {
     ble.echo(false);
-    initialized = ble.begin(false);
+    ble.verbose(false);
   };
 
-  void begin(void){
-    ble.echo(false);
+  void begin(void)
+  {
     initialized = ble.begin(false);
   }
   
-  int connect(void){
+  int connect(void)
+  {
+    if (initialized)
+    {
+      ble.setmode(BLUEFRUIT_MODE_DATA);
+    }
     return ble.isConnected();
+  }
+
+  void disconnect(void)
+  {
+    ble.end();
   }
 };
 
