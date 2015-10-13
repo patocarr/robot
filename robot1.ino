@@ -221,7 +221,8 @@ PID followPID(&fInput, &fOutput, &fSetpoint, fKp, fKi, fKd, DIRECT);
 // LCD
 LiquidCrystal lcd(8, 9, 10, 11, 12, 13);
 
-Bluetooth blue;
+//Bluetooth blue;
+Adafruit_BluefruitLE_UART ble(Serial2, BLUEFRUIT_UART_MODE_PIN);
 
 int LCD_brightness = 255;
 
@@ -246,6 +247,12 @@ void LCD_setBacklight(uint8_t r, uint8_t g, uint8_t b) {
 // the setup function runs once when you press reset or power the board
 void setup() {
   Serial.begin(9600);
+
+    ble.echo(true);
+    ble.verbose(false);
+    if (ble.begin(VERBOSE_MODE)){
+      Serial.println( "Initialized Bluefruit: " );
+    }
   
   // initialize digital pin 13 as an output.
   pinMode(LED, OUTPUT);
@@ -288,7 +295,7 @@ void setup() {
   followPID.SetSampleTime(200);
 
   // Enable Bluetooth module
-  blue.begin();
+  //blue.begin();
 }
 
 void loop() {
@@ -320,7 +327,7 @@ void loop() {
   lcd.setCursor(0,1);
   lcd.print("fOut ");
   lcd.print((int)fOutput);
-  if (blue.connect())
+  //if (blue.connect())
   {
     Serial.println(" BLE on");
     lcd.print("BLE On");
