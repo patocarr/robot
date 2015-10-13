@@ -146,20 +146,24 @@ class Bluetooth
   Bluetooth()
     : ble (Serial2, BLUEFRUIT_UART_MODE_PIN)
   {
-    ble.echo(false);
+    Serial.println( "Bluefruit constructor" );
+    ble.echo(true);
     ble.verbose(false);
   };
 
   void begin(void)
   {
-    initialized = ble.begin(false);
+    initialized = ble.begin(VERBOSE_MODE);
+    Serial.print( "Initialized Bluefruit: " );
+    Serial.println( initialized );
   }
   
   int connect(void)
   {
     if (initialized)
     {
-      ble.setmode(BLUEFRUIT_MODE_DATA);
+      Serial.println( F("OK!") );
+      ble.setMode(BLUEFRUIT_MODE_DATA);
     }
     return ble.isConnected();
   }
@@ -217,7 +221,7 @@ PID followPID(&fInput, &fOutput, &fSetpoint, fKp, fKi, fKd, DIRECT);
 // LCD
 LiquidCrystal lcd(8, 9, 10, 11, 12, 13);
 
-//Bluetooth blue;
+Bluetooth blue;
 
 int LCD_brightness = 255;
 
@@ -284,7 +288,7 @@ void setup() {
   followPID.SetSampleTime(200);
 
   // Enable Bluetooth module
-  //blue.begin();
+  blue.begin();
 }
 
 void loop() {
@@ -316,7 +320,11 @@ void loop() {
   lcd.setCursor(0,1);
   lcd.print("fOut ");
   lcd.print((int)fOutput);
-  //if (blue.connect()) lcd.print("BLE On");
+  if (blue.connect())
+  {
+    Serial.println(" BLE on");
+    lcd.print("BLE On");
+  }
 
   Serial.print(" Speed L:R=");
   Serial.print(lspeed);
