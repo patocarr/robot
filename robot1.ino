@@ -138,10 +138,12 @@ class uSound {
 class Bluetooth {
   int initialized, connected;
 
-  Adafruit_BluefruitLE_UART ble = Adafruit_BluefruitLE_UART(Serial2, BLUEFRUIT_UART_MODE_PIN);
+  Adafruit_BluefruitLE_UART ble;
 
   public:
-  Bluetooth(void){
+  Bluetooth()
+    : ble (Serial2, BLUEFRUIT_UART_MODE_PIN)
+  {
     ble.echo(false);
     initialized = ble.begin(false);
   };
@@ -203,7 +205,7 @@ PID followPID(&fInput, &fOutput, &fSetpoint, fKp, fKi, fKd, DIRECT);
 // LCD
 LiquidCrystal lcd(8, 9, 10, 11, 12, 13);
 
-Bluetooth blue;
+//Bluetooth blue;
 
 int LCD_brightness = 255;
 
@@ -270,7 +272,7 @@ void setup() {
   followPID.SetSampleTime(200);
 
   // Enable Bluetooth module
-//  blue.begin();
+  //blue.begin();
 }
 
 void loop() {
