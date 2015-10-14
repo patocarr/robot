@@ -71,14 +71,14 @@ class Motor {
         newdir = -1;
       }
       speed = abs(newspeed);
-      myMotor->setSpeed(speed);
-      if (newdir == 1){
-        myMotor->run(FORWARD);
-      } else if (newdir == -1) {
-        myMotor->run(BACKWARD);
-      } else {
+//      myMotor->setSpeed(speed);
+//      if (newdir == 1){
+ //       myMotor->run(FORWARD);
+//      } else if (newdir == -1) {
+//        myMotor->run(BACKWARD);
+//      } else {
         myMotor->run(RELEASE);
-      }
+//      }
     }
   }
 
