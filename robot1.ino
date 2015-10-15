@@ -73,7 +73,7 @@ class Motor {
       speed = abs(newspeed);
 //      myMotor->setSpeed(speed);
 //      if (newdir == 1){
- //       myMotor->run(FORWARD);
+//        myMotor->run(FORWARD);
 //      } else if (newdir == -1) {
 //        myMotor->run(BACKWARD);
 //      } else {
@@ -184,17 +184,17 @@ int ir() {
     //res |= ir[i]<<i;
     res += cosx[i]*(ir[i] ? 0 : 1);
     if (!ir[i]) ir_en_cnt++;
-    Serial.print(ir[i]);
-    Serial.print("  ");
+    //Serial.print(ir[i]);
+    //Serial.print("  ");
   }
   if (ir_en_cnt>0) {
     res = res/ir_en_cnt;
   } else {
     res = 0;
   }
-  Serial.print(" Res:");
-  Serial.print(res);
-  Serial.print("  ");
+  //Serial.print(" Res:");
+  //Serial.print(res);
+  //Serial.print("  ");
   return res;
 }
 
@@ -316,27 +316,12 @@ void loop() {
   lspeed = dOutput * (fOutput> 40? 0.2: .5) - fOutput;
   rspeed = dOutput * (fOutput<-40? 0.2: .5) + fOutput;
 
-  Serial.print(" dOutput=");
-  Serial.print(dOutput);
-  Serial.print(" fOutput=");
-  Serial.print(fOutput);
-
   lcd.setCursor(0,0);
   lcd.print("dOut ");
   lcd.print((int)dOutput);
   lcd.setCursor(0,1);
   lcd.print("fOut ");
   lcd.print((int)fOutput);
-  //if (blue.connect())
-  {
-    Serial.println(" BLE on");
-    lcd.print("BLE On");
-  }
-
-  Serial.print(" Speed L:R=");
-  Serial.print(lspeed);
-  Serial.print(":");
-  Serial.print(rspeed);
 
   brMotor.update(rspeed, currMillis);
   frMotor.update(rspeed, currMillis);
