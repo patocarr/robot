@@ -344,10 +344,20 @@ void loop() {
   } else {
     digitalWrite(LED, LOW);
   }
-  Serial.print(" ");
-  Serial.print(dInput);
-  Serial.println(" cm");
+
+  if (blue.isConnected())
+  {
+    lcd.setCursor(9,1);
+    lcd.print("BLE On ");
+  } else if (blue.isInitialized) {
+    lcd.setCursor(9,1);
+    lcd.print("BLE Off");
+  } else { // Bluefruit not detected
+    lcd.setCursor(9,1);
+    lcd.print("BLE N/A");
+  }
 }
+
 
 /* vim: set tabstop=2 shiftwidth=2 expandtab: */
 
