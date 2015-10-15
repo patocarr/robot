@@ -146,13 +146,15 @@ class Bluetooth
   int initialized, connected;
   unsigned long prevMillis;
   long interval;
-  Adafruit_BluefruitLE_UART ble;
 
   public:
+
+  Adafruit_BluefruitLE_UART ble;
+
   Bluetooth()
     : ble (Serial2, BLUEFRUIT_UART_MODE_PIN)
   {
-    interval = 500;
+    interval = 200;
     connected = 0;
   };
 
