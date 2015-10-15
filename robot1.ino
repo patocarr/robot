@@ -18,6 +18,10 @@
 #include <Adafruit_BluefruitLE_UART.h>
 #include "BluefruitConfig.h"
 
+uint8_t readPacket(Adafruit_BLE *ble, uint16_t timeout);
+
+extern uint8_t packetbuffer[];
+
 #define trigPin 31
 #define echoPin 30
 
@@ -313,6 +317,7 @@ void loop() {
   int distance, lspeed, rspeed;
   int ir_sensors;
   unsigned long currMillis = millis();
+  uint8_t len;
 
   // Get average measured distance
   dInput=usound.get_dist(currMillis);
@@ -349,7 +354,38 @@ void loop() {
   {
     lcd.setCursor(9,1);
     lcd.print("BLE On ");
-  } else if (blue.isInitialized) {
+    len = readPacket(&blue.ble, BLE_READPACKET_TIMEOUT);
+    if (len>0) {
+
+      // Color
+      if (packetbuffer[1] == 'C') {
+        uint8_t red = packetbuffer[2];
+        uint8_t green = packetbuffer[3];
+        uint8_t blue = packetbuffer[4];
+        Serial.print ("RGB #");
+        if (red < 0x10) Serial.print("0");
+        Serial.print(red, HEX);
+        if (green < 0x10) Serial.print("0");
+        Serial.print(green, HEX);
+        if (blue < 0x10) Serial.print("0");
+        Serial.println(blue, HEX);
+        LCD_setBacklight(red, green, blue);
+      }
+
+      // Buttons
+      if (packetbuffer[1] == 'B') {
+        uint8_t buttnum = packetbuffer[2] - '0';
+        boolean pressed = packetbuffer[3] - '0';
+        Serial.print ("Button "); Serial.print(buttnum);
+        if (pressed) {
+          Serial.println(" pressed");
+        } else {
+          Serial.println(" released");
+        }
+      }
+
+    }
+  } else if (blue.isInitialized()) {
     lcd.setCursor(9,1);
     lcd.print("BLE Off");
   } else { // Bluefruit not detected
