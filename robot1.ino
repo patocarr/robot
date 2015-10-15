@@ -140,32 +140,47 @@ class uSound {
 class Bluetooth
 {
   int initialized, connected;
+  unsigned long prevMillis;
+  long interval;
   Adafruit_BluefruitLE_UART ble;
 
   public:
   Bluetooth()
     : ble (Serial2, BLUEFRUIT_UART_MODE_PIN)
   {
-    Serial.println( "Bluefruit constructor" );
-    ble.echo(true);
-    ble.verbose(false);
+    interval = 500;
+    connected = 0;
   };
 
-  void begin(void)
+  int begin(void)
   {
+    ble.echo(false);
     initialized = ble.begin(VERBOSE_MODE);
-    Serial.print( "Initialized Bluefruit: " );
-    Serial.println( initialized );
-  }
-  
-  int connect(void)
-  {
     if (initialized)
     {
-      Serial.println( F("OK!") );
+      ble.setMode(BLUEFRUIT_MODE_DATA);
+      ble.verbose(false);
+      ble.info();
+    }
+    return initialized;
+  }
+  
+  int isInitialized(void)
+  {
+    return initialized;
+  }
+
+  int isConnected(void)
+  {
+    unsigned long currMillis = millis();
+    if (currMillis - prevMillis >= interval)
+    {
+      prevMillis = currMillis;
+      ble.setMode(BLUEFRUIT_MODE_COMMAND);
+      connected = ble.isConnected();
       ble.setMode(BLUEFRUIT_MODE_DATA);
     }
-    return ble.isConnected();
+    return connected;
   }
 
   void disconnect(void)
@@ -221,8 +236,7 @@ PID followPID(&fInput, &fOutput, &fSetpoint, fKp, fKi, fKd, DIRECT);
 // LCD
 LiquidCrystal lcd(8, 9, 10, 11, 12, 13);
 
-//Bluetooth blue;
-Adafruit_BluefruitLE_UART ble(Serial2, BLUEFRUIT_UART_MODE_PIN);
+Bluetooth blue;
 
 int LCD_brightness = 255;
 
