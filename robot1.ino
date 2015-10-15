@@ -246,14 +246,8 @@ void LCD_setBacklight(uint8_t r, uint8_t g, uint8_t b) {
 
 // the setup function runs once when you press reset or power the board
 void setup() {
-  Serial.begin(9600);
+  Serial.begin(115200);
 
-    ble.echo(true);
-    ble.verbose(false);
-    if (ble.begin(VERBOSE_MODE)){
-      Serial.println( "Initialized Bluefruit: " );
-    }
-  
   // initialize digital pin 13 as an output.
   pinMode(LED, OUTPUT);
 
@@ -295,7 +289,10 @@ void setup() {
   followPID.SetSampleTime(200);
 
   // Enable Bluetooth module
-  //blue.begin();
+  if (blue.begin()){
+    Serial.println( "Initialized Bluefruit" );
+  }
+
 }
 
 void loop() {
