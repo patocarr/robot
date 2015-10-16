@@ -335,10 +335,12 @@ void loop() {
   rspeed = dOutput * (fOutput<-40? 0.2: .5) + fOutput;
 
   lcd.setCursor(0,0);
-  lcd.print("dOut ");
+  lcd.print("dOut    ");
+  lcd.setCursor(5,0);
   lcd.print((int)dOutput);
   lcd.setCursor(0,1);
-  lcd.print("fOut ");
+  lcd.print("fOut    ");
+  lcd.setCursor(5,1);
   lcd.print((int)fOutput);
 
   brMotor.update(rspeed, currMillis);
