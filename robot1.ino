@@ -44,9 +44,6 @@ uint8_t packetbuffer[READ_BUFSIZE+1];
 
 #define LED 13
 
-#define LCD_RED 3
-#define LCD_GREEN 5
-#define LCD_BLUE 6
 
 #define Motor1 1
 #define Motor2 2
@@ -276,12 +273,21 @@ class Bluetooth
 
 class Display
 {
+  int LCD_brightness;
   LiquidCrystal lcd;
+  uint8_t LCD_RED;
+  uint8_t LCD_GREEN;
+  uint8_t LCD_BLUE;
 
   public:
   Display ()
-  : lcd(8, 9, 10, 11, 12, 13)
+  : lcd(8, 9, 10, 11, 12, 13), LCD_RED(3), LCD_GREEN(5), LCD_BLUE(6)
   {
+    LCD_brightness = 100;
+    pinMode(LCD_RED, OUTPUT);
+    pinMode(LCD_GREEN, OUTPUT);
+    pinMode(LCD_BLUE, OUTPUT);
+    set_bklight(162, 40, 255); // light purple
     // Set up the LCD's number of columns and rows:
     lcd.begin(16, 2);
   }
@@ -318,6 +324,24 @@ class Display
   {
     lcd.setCursor(9,1);
     lcd.print("BLE N/A");
+  }
+
+  void set_bklight(uint8_t r, uint8_t g, uint8_t b) {
+    // normalize the red LED - its brighter than the rest!
+    r = map(r, 0, 255, 0, 100);
+    g = map(g, 0, 255, 0, 150);
+
+    r = map(r, 0, 255, 0, LCD_brightness);
+    g = map(g, 0, 255, 0, LCD_brightness);
+    b = map(b, 0, 255, 0, LCD_brightness);
+
+    // common anode so invert!
+    r = map(r, 0, 255, 255, 0);
+    g = map(g, 0, 255, 255, 0);
+    b = map(b, 0, 255, 255, 0);
+    analogWrite(LCD_RED, r);
+    analogWrite(LCD_GREEN, g);
+    analogWrite(LCD_BLUE, b);
   }
 };
 
@@ -369,25 +393,6 @@ Bluetooth blue;
 
 Display lcd;
 
-int LCD_brightness = 255;
-
-void LCD_setBacklight(uint8_t r, uint8_t g, uint8_t b) {
-  // normalize the red LED - its brighter than the rest!
-  r = map(r, 0, 255, 0, 100);
-  g = map(g, 0, 255, 0, 150);
- 
-  r = map(r, 0, 255, 0, LCD_brightness);
-  g = map(g, 0, 255, 0, LCD_brightness);
-  b = map(b, 0, 255, 0, LCD_brightness);
- 
-  // common anode so invert!
-  r = map(r, 0, 255, 255, 0);
-  g = map(g, 0, 255, 255, 0);
-  b = map(b, 0, 255, 255, 0);
-  analogWrite(LCD_RED, r);
-  analogWrite(LCD_GREEN, g);
-  analogWrite(LCD_BLUE, b);
-}
 
 // the setup function runs once when you press reset or power the board
 void setup() {
@@ -413,11 +418,6 @@ void setup() {
   pinMode(IR5, INPUT);
   pinMode(IR6, INPUT);
 
-  pinMode(LCD_RED, OUTPUT);
-  pinMode(LCD_GREEN, OUTPUT);
-  pinMode(LCD_BLUE, OUTPUT);
-  LCD_brightness = 100;
-  LCD_setBacklight(162, 40, 255); // light purple
 
   // Set up PID for distance
   dSetpoint = 30;
@@ -489,7 +489,7 @@ void loop() {
         Serial.print(green, HEX);
         if (blue < 0x10) Serial.print("0");
         Serial.println(blue, HEX);
-        LCD_setBacklight(red, green, blue);
+        lcd.set_bklight(red, green, blue);
       }
 
       // Buttons
