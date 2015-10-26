@@ -274,6 +274,53 @@ class Bluetooth
   }
 };
 
+class Display
+{
+  LiquidCrystal lcd;
+
+  public:
+  Display ()
+  : lcd(8, 9, 10, 11, 12, 13)
+  {
+    // Set up the LCD's number of columns and rows:
+    lcd.begin(16, 2);
+  }
+
+  void dout(int dOutput)
+  {
+    lcd.setCursor(0,0);
+    lcd.print("dOut    ");
+    lcd.setCursor(5,0);
+    lcd.print((int)dOutput);
+  }
+
+  void fout(int fOutput)
+  {
+    lcd.setCursor(0,1);
+    lcd.print("fOut    ");
+    lcd.setCursor(5,1);
+    lcd.print((int)fOutput);
+  }
+  
+  void ble_on(void)
+  {
+    lcd.setCursor(9,1);
+    lcd.print("BLE On ");
+  }
+
+  void ble_off(void)
+  {
+    lcd.setCursor(9,1);
+    lcd.print("BLE Off");
+  }
+
+  void ble_na(void)
+  {
+    lcd.setCursor(9,1);
+    lcd.print("BLE N/A");
+  }
+};
+
 int ir() {
   int ir [6];
   int cosx [6]={-100, -60, -20, 20, 60, 100};
@@ -318,10 +365,9 @@ double fSetpoint, fInput, fOutput;
 double fKp=3, fKi=5, fKd=2;
 PID followPID(&fInput, &fOutput, &fSetpoint, fKp, fKi, fKd, DIRECT);
 
-// LCD
-LiquidCrystal lcd(8, 9, 10, 11, 12, 13);
-
 Bluetooth blue;
+
+Display lcd;
 
 int LCD_brightness = 255;
 
@@ -367,8 +413,6 @@ void setup() {
   pinMode(IR5, INPUT);
   pinMode(IR6, INPUT);
 
-  // Set up the LCD's number of columns and rows:
-  lcd.begin(16, 2);
   pinMode(LCD_RED, OUTPUT);
   pinMode(LCD_GREEN, OUTPUT);
   pinMode(LCD_BLUE, OUTPUT);
@@ -413,14 +457,8 @@ void loop() {
   lspeed = dOutput * (fOutput> 40? 0.2: .5) - fOutput;
   rspeed = dOutput * (fOutput<-40? 0.2: .5) + fOutput;
 
-  lcd.setCursor(0,0);
-  lcd.print("dOut    ");
-  lcd.setCursor(5,0);
-  lcd.print((int)dOutput);
-  lcd.setCursor(0,1);
-  lcd.print("fOut    ");
-  lcd.setCursor(5,1);
-  lcd.print((int)fOutput);
+  lcd.dout(dOutput);
+  lcd.fout(fOutput);
 
   brMotor.update(rspeed, currMillis);
   frMotor.update(rspeed, currMillis);
@@ -435,8 +473,7 @@ void loop() {
 
   if (blue.isConnected())
   {
-    lcd.setCursor(9,1);
-    lcd.print("BLE On ");
+    lcd.ble_on();
     len = blue.readPacket(BLE_READPACKET_TIMEOUT);
     if (len>0) {
 
@@ -469,11 +506,9 @@ void loop() {
 
     }
   } else if (blue.isInitialized()) {
-    lcd.setCursor(9,1);
-    lcd.print("BLE Off");
+    lcd.ble_off();
   } else { // Bluefruit not detected
-    lcd.setCursor(9,1);
-    lcd.print("BLE N/A");
+    lcd.ble_na();
   }
 }
 
