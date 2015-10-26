@@ -32,9 +32,6 @@
 /* Buffer to hold incoming characters */
 uint8_t packetbuffer[READ_BUFSIZE+1];
 
-#define trigPin 31
-#define echoPin 30
-
 #define IR1 22
 #define IR2 23
 #define IR3 24
@@ -103,6 +100,8 @@ class uSound {
   long duration, distance, interval;
   unsigned long prevMillis;
   int dist_arr[NUM_USAMPLES];
+  int trigPin;
+  int echoPin;
 
   int usound() {
     long duration, distance;
@@ -120,7 +119,11 @@ class uSound {
   }
 
   public:
-  uSound(int interval=10){
+  uSound(int interval=10)
+    : trigPin(31), echoPin(30)
+  {
+    pinMode(trigPin, OUTPUT);
+    pinMode(echoPin, INPUT);
     duration, distance = 0;
     for (int i=0; i<NUM_USAMPLES-1; i++){
       dist_arr[i]=0;
@@ -382,12 +385,12 @@ double dSetpoint, dInput, dOutput;
 double dKp=3, dKi=5, dKd=2;
 PID distPID(&dInput, &dOutput, &dSetpoint, dKp, dKi, dKd, REVERSE);
 
-uSound usound(10);
-
 // Follower PID variables
 double fSetpoint, fInput, fOutput;
 double fKp=3, fKi=5, fKd=2;
 PID followPID(&fInput, &fOutput, &fSetpoint, fKp, fKi, fKd, DIRECT);
+
+uSound usound(10);
 
 Bluetooth blue;
 
@@ -400,9 +403,6 @@ void setup() {
 
   // initialize digital pin 13 as an output.
   pinMode(LED, OUTPUT);
-
-  pinMode(trigPin, OUTPUT);
-  pinMode(echoPin, INPUT);
 
   // Initialize motor shield
   brMotor.begin();
